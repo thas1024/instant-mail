@@ -1,7 +1,6 @@
 package cc.thas.mail.event.listener;
 
 import cc.thas.mail.event.Event;
-import cc.thas.mail.event.listener.EventListener;
 import cc.thas.mail.event.impl.MailReceivedEvent;
 
 import java.util.Collections;
@@ -19,7 +18,7 @@ public abstract class AbstractMailReceivedEventListener implements EventListener
 
     @Override
     public void handle(Event<?> event) {
-        if(event instanceof MailReceivedEvent){
+        if (event instanceof MailReceivedEvent) {
             onMailReceived((MailReceivedEvent) event);
         }
     }

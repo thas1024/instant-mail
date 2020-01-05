@@ -31,11 +31,11 @@ public class MultiPartMixedContentWrapper extends AbstractMessageContentWrapper 
     public void init() throws MessagingException, IOException {
         attachmentResources = new ArrayList<>();
         for (int i = 0; i < content.getCount(); ++i) {
-            MimeBodyPart bodyPart = (MimeBodyPart)content.getBodyPart(i);
+            MimeBodyPart bodyPart = (MimeBodyPart) content.getBodyPart(i);
             if (bodyPart.isMimeType(MULTI_PART_RELATED)) {
-                multiPartRelatedPartWrapper = new MultiPartRelatedContentWrapper((Multipart)bodyPart.getContent());
+                multiPartRelatedPartWrapper = new MultiPartRelatedContentWrapper((Multipart) bodyPart.getContent());
             } else if (bodyPart.getContentID() != null) {
-                if(bodyPart.getContent() instanceof InputStream){
+                if (bodyPart.getContent() instanceof InputStream) {
                     attachmentResources.add(new ResourceWrapper(bodyPart));
                 }
             }

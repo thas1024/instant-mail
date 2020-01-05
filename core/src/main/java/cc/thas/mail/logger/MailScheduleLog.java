@@ -1,6 +1,6 @@
 package cc.thas.mail.logger;
 
-import cc.thas.utils.StringUtil;
+import cc.thas.mail.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

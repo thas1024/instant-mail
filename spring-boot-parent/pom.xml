@@ -11,6 +11,37 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>instant-mail-spring-boot-parent</artifactId>
+    <packaging>pom</packaging>
 
+    <modules>
+        <module>spring-boot-starter</module>
+        <module>spring-boot-autoconfigure</module>
+    </modules>
 
+    <properties>
+        <spring-boot.version>2.2.2.RELEASE</spring-boot.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>cc.thas</groupId>
+                <artifactId>instant-mail-spring-boot-starter</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cc.thas</groupId>
+                <artifactId>instant-mail-spring-boot-autoconfigure</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>${spring-boot.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 </project>

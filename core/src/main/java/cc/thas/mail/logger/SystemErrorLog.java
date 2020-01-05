@@ -1,6 +1,6 @@
 package cc.thas.mail.logger;
 
-import cc.thas.utils.StringUtil;
+import cc.thas.mail.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SystemErrorLog {
 
-    private static final Logger LOG =  LoggerFactory.getLogger(SystemErrorLog.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SystemErrorLog.class);
 
     public static void error(String format, Object... args) {
         LOG.error(StringUtil.format(format, args));

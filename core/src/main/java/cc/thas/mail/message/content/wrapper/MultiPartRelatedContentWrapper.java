@@ -30,10 +30,10 @@ public class MultiPartRelatedContentWrapper extends AbstractMessageContentWrappe
     public void init() throws MessagingException, IOException {
         inlineResources = new ArrayList<>();
         for (int i = 0; i < content.getCount(); ++i) {
-            MimeBodyPart bodyPart = (MimeBodyPart)content.getBodyPart(i);
+            MimeBodyPart bodyPart = (MimeBodyPart) content.getBodyPart(i);
             if (bodyPart.isMimeType(AbstractMessageContentWrapper.MULTI_PART_ALTERNATIVE)) {
                 multiPartAlternativePartWrapper = new MultiPartAlternativeContentWrapper(
-                    (Multipart)bodyPart.getContent());
+                        (Multipart) bodyPart.getContent());
             } else if (bodyPart.getContentID() != null) {
                 inlineResources.add(new ResourceWrapper(bodyPart));
             }

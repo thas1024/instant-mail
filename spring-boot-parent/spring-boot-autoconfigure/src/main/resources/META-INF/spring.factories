@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+cc.thas.mail.spring.boot.autoconfigure.InstantMailAutoConfiguration

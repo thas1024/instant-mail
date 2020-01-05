@@ -17,7 +17,7 @@ public class ResourceWrapper implements ResourceGetter {
 
     private final MimeBodyPart bodyPart;
 
-    public ResourceWrapper(MimeBodyPart bodyPart){
+    public ResourceWrapper(MimeBodyPart bodyPart) {
         this.bodyPart = bodyPart;
     }
 
@@ -38,7 +38,7 @@ public class ResourceWrapper implements ResourceGetter {
 
     @Override
     public InputStream getContent() throws IOException, MessagingException {
-        return (InputStream)bodyPart.getContent();
+        return (InputStream) bodyPart.getContent();
     }
 
     public static String convertContentId(String contentId) {

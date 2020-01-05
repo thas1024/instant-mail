@@ -28,11 +28,13 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 public class DefaultMailScheduler implements MailScheduler {
 
     private final EventPublisher eventPublisher;
-    private final ScheduledExecutorService executor = new ScheduledThreadPoolExecutor(16);
+    private final ScheduledExecutorService executor;
     private final Map<String, Store> storeMap = new ConcurrentHashMap<>();
 
     public DefaultMailScheduler(EventPublisher eventPublisher) {
         this.eventPublisher = eventPublisher;
+        MailScheduleLog.info("Mail scheduler start.");
+        executor = new ScheduledThreadPoolExecutor(16);
         eventPublisher.registerEventListener(new MailTaskErrorEventListener());
         eventPublisher.registerEventListener(new LogMailReceivedEventListener());
     }

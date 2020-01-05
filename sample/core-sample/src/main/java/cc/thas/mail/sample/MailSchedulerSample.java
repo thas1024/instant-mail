@@ -1,3 +1,5 @@
+package cc.thas.mail.sample;
+
 import cc.thas.mail.event.listener.impl.DefaultMailReceivedEventListener;
 import cc.thas.mail.event.publisher.EventPublisher;
 import cc.thas.mail.event.publisher.impl.DefaultEventPublisher;

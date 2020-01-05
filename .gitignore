@@ -111,4 +111,5 @@ buildNumber.properties
 
 .idea
 *.iml
-task-config-thas.properties
+*thas.*
+*dev.*

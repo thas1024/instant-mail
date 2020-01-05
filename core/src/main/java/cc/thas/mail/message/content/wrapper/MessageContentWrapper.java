@@ -50,15 +50,15 @@ public class MessageContentWrapper extends AbstractMessageContentWrapper {
     @Override
     public void init() throws MessagingException, IOException {
         if (message.isMimeType(TEXT_PLAIN)) {
-            messageContentGetter = new TextPlainContentWrapper((String)message.getContent());
+            messageContentGetter = new TextPlainContentWrapper((String) message.getContent());
         } else if (message.isMimeType(TEXT_HTML)) {
-            messageContentGetter = new TextHtmlContentWrapper((String)message.getContent());
+            messageContentGetter = new TextHtmlContentWrapper((String) message.getContent());
         } else if (message.isMimeType(MULTI_PART_RELATED)) {
-            messageContentGetter = new MultiPartRelatedContentWrapper((Multipart)message.getContent());
+            messageContentGetter = new MultiPartRelatedContentWrapper((Multipart) message.getContent());
         } else if (message.isMimeType(MULTI_PART_ALTERNATIVE)) {
-            messageContentGetter = new MultiPartAlternativeContentWrapper((Multipart)message.getContent());
+            messageContentGetter = new MultiPartAlternativeContentWrapper((Multipart) message.getContent());
         } else if (message.isMimeType(MULTI_PART_MIXED)) {
-            messageContentGetter = new MultiPartMixedContentWrapper((Multipart)message.getContent());
+            messageContentGetter = new MultiPartMixedContentWrapper((Multipart) message.getContent());
         }
     }
 

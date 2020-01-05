@@ -25,11 +25,11 @@ public class MultiPartAlternativeContentWrapper extends AbstractMessageContentWr
     @Override
     public void init() throws MessagingException, IOException {
         for (int i = 0; i < content.getCount(); ++i) {
-            MimeBodyPart bodyPart = (MimeBodyPart)content.getBodyPart(i);
+            MimeBodyPart bodyPart = (MimeBodyPart) content.getBodyPart(i);
             if (bodyPart.isMimeType(AbstractMessageContentWrapper.TEXT_PLAIN)) {
-                textPlainPartWrapper = new TextPlainContentWrapper((String)bodyPart.getContent());
+                textPlainPartWrapper = new TextPlainContentWrapper((String) bodyPart.getContent());
             } else if (bodyPart.isMimeType(AbstractMessageContentWrapper.TEXT_HTML)) {
-                textHtmlPartWrapper = new TextHtmlContentWrapper((String)bodyPart.getContent());
+                textHtmlPartWrapper = new TextHtmlContentWrapper((String) bodyPart.getContent());
             }
         }
     }

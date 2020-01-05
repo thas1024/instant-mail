@@ -53,7 +53,7 @@ public class MessageWrapper extends AbstractMessageWrapper implements Initable {
     @Override
     public InternetAddress getFromAddress() throws MessagingException {
         Address[] from = message.getFrom();
-        return from.length == 0 ? null : (InternetAddress)from[0];
+        return from.length == 0 ? null : (InternetAddress) from[0];
     }
 
     @Override
@@ -66,7 +66,7 @@ public class MessageWrapper extends AbstractMessageWrapper implements Initable {
         }
 
         return addresses == null ? Collections.emptyList() :
-            Arrays.stream(addresses).map(address -> (InternetAddress)address).collect(Collectors.toList());
+                Arrays.stream(addresses).map(address -> (InternetAddress) address).collect(Collectors.toList());
     }
 
     @Override
