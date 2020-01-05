@@ -6,6 +6,7 @@ import cc.thas.mail.event.impl.MailReceivedEvent;
 import cc.thas.mail.event.impl.MailTaskErrorEvent;
 import cc.thas.mail.event.publisher.EventPublisher;
 import cc.thas.mail.exception.MailTaskException;
+import cc.thas.mail.logger.SystemErrorLog;
 import cc.thas.mail.message.MailMessage;
 import cc.thas.mail.message.MessageGetter;
 import cc.thas.mail.schedule.SchedulerTaskConfig;
@@ -28,6 +29,7 @@ public class MailTask implements Runnable {
     private final EventPublisher eventPublisher;
     private final int maxCacheCount;
     private Queue<String> cachedMessageIds = new LinkedList<>();
+    private int retryCount = 0;
 
     public MailTask(SchedulerTaskConfig config, EventPublisher eventPublisher) {
         this.taskId = UUID.randomUUID().toString();
@@ -43,8 +45,22 @@ public class MailTask implements Runnable {
         try {
             doRun();
         } catch (Exception e) {
-            eventPublisher.publish(new MailTaskErrorEvent(taskId, new MailTaskException(e)));
+            if (retryCount < 3) {
+                SystemErrorLog.error(e, "Task %s run in error.", taskId);
+                retryCount++;
+                try {
+                    init();
+                    e = null;
+                    run();
+                } catch (Exception ex) {
+                    e = ex;
+                }
+            }
+            if (e != null) {
+                eventPublisher.publish(new MailTaskErrorEvent(taskId, new MailTaskException(e)));
+            }
         }
+        retryCount = 0;
     }
 
     public String getTaskId() {
