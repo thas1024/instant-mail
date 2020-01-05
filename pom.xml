@@ -10,7 +10,10 @@
     <version>1.0-SNAPSHOT</version>
     <modules>
         <module>core</module>
-        <module>sample/instant-mail-core-sample</module>
+        <module>sample/core-sample</module>
+        <module>spring-boot-parent</module>
+        <module>spring-boot-parent/spring-boot-starter</module>
+        <module>spring-boot-parent/spring-boot-autoconfigure</module>
     </modules>
 
     <properties>

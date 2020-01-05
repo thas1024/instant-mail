@@ -1,7 +1,5 @@
 package cc.thas.mail.schedule.impl;
 
-import cc.thas.mail.client.MailClient;
-import cc.thas.mail.client.impl.MailClientImpl;
 import cc.thas.mail.event.Event;
 import cc.thas.mail.event.impl.MailReceivedEvent;
 import cc.thas.mail.event.impl.MailTaskErrorEvent;
@@ -12,6 +10,7 @@ import cc.thas.mail.logger.MailScheduleLog;
 import cc.thas.mail.schedule.MailScheduler;
 import cc.thas.mail.schedule.SchedulerTaskConfig;
 import cc.thas.mail.schedule.task.MailTask;
+import lombok.Data;
 
 import javax.mail.MessagingException;
 import java.util.Collections;
@@ -40,38 +39,47 @@ public class DefaultMailScheduler implements MailScheduler {
 
     @Override
     public void submit(SchedulerTaskConfig config) {
-        MailClient mailClient = new MailClientImpl(config.getProtocol(), config.getHost(), config.getUser(),
-                config.getPassword());
-        MailTask mailTask = new MailTask(mailClient, eventPublisher);
+        MailTask mailTask = new MailTask(config, eventPublisher);
+        try {
+            mailTask.init();
+        } catch (MessagingException e) {
+            MailScheduleLog.error("Task %s user %s init failed.", mailTask.getTaskId(), config.getUser());
+            return;
+        }
         MailScheduleLog.info("Submit task %s user %s.", mailTask.getTaskId(), config.getUser());
         ScheduledFuture<?> scheduledFuture = executor.scheduleAtFixedRate(mailTask, config.getInitialDelay(),
                 config.getPeriod(), config.getUnit());
         Store store = new Store();
         store.setConfig(config);
+        store.setTask(mailTask);
         store.setFuture(scheduledFuture);
-        store.setMailClient(mailClient);
         storeMap.put(mailTask.getTaskId(), store);
     }
 
     @Override
     public void shutdown() {
         storeMap.forEach((taskId, store) -> {
-            MailScheduleLog.info("Cancel task %s user %s.", taskId, store.getConfig().getUser());
-            store.getFuture().cancel(true);
-            MailClient mailClient = store.getMailClient();
-            try {
-                mailClient.close();
-            } catch (MessagingException e) {
-                MailScheduleLog.error(e, "MailClient closed failed.");
-            }
-
+            cancelTask(store);
         });
         MailScheduleLog.info("Mail scheduler shutdown.");
         executor.shutdown();
     }
 
-    private void removeTask(String taskId) {
+    private void cancelTask(Store store) {
+        MailScheduleLog.info("Cancel task %s user %s.", store.getTask().getTaskId(), store.getConfig().getUser());
+        store.getFuture().cancel(false);
+        try {
+            store.getTask().destory();
+        } catch (MessagingException e) {
+            MailScheduleLog.error(e, "MailTask destroyed failed.");
+        }
+    }
 
+    @Data
+    public static class Store {
+        private SchedulerTaskConfig config;
+        private ScheduledFuture<?> future;
+        private MailTask task;
     }
 
     public class MailTaskErrorEventListener implements EventListener {
@@ -97,46 +105,9 @@ public class DefaultMailScheduler implements MailScheduler {
             }
             MailScheduleLog.error(payload.getException(), "Task %s User %s on error.", payload.getTaskId(),
                     store.getConfig().getUser());
-            ScheduledFuture<?> scheduledFuture = store.getFuture();
-            MailScheduleLog.info("Cancel task %s user %s.", payload.getTaskId(), store.getConfig().getUser());
-            scheduledFuture.cancel(false);
-            try {
-                store.getMailClient().close();
-            } catch (MessagingException e) {
-                MailScheduleLog.error(e, "MailClient closed failed.");
-            }
+            cancelTask(store);
             MailScheduleLog.info("Remove task %s user %s.", payload.getTaskId(), store.getConfig().getUser());
             storeMap.remove(payload.getTaskId());
-        }
-    }
-
-    public static class Store {
-        private ScheduledFuture<?> future;
-        private MailClient mailClient;
-        private SchedulerTaskConfig config;
-
-        public ScheduledFuture<?> getFuture() {
-            return future;
-        }
-
-        public void setFuture(ScheduledFuture<?> future) {
-            this.future = future;
-        }
-
-        public MailClient getMailClient() {
-            return mailClient;
-        }
-
-        public void setMailClient(MailClient mailClient) {
-            this.mailClient = mailClient;
-        }
-
-        public SchedulerTaskConfig getConfig() {
-            return config;
-        }
-
-        public void setConfig(SchedulerTaskConfig config) {
-            this.config = config;
         }
     }
 
@@ -145,7 +116,7 @@ public class DefaultMailScheduler implements MailScheduler {
         @Override
         protected void onMailReceived(MailReceivedEvent event) {
             MailReceivedEvent.MailReceivedPayload payload = event.getPayload();
-            MailScheduleLog.info("Task %s user %s received mail %s.", payload.getTaskId(),
+            MailScheduleLog.info("Task %s user %s received mail.", payload.getTaskId(),
                     payload.getMessage().getId());
         }
     }

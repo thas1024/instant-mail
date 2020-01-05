@@ -1,12 +1,14 @@
 package cc.thas.mail.schedule.task;
 
 import cc.thas.mail.client.MailClient;
+import cc.thas.mail.client.impl.MailClientImpl;
 import cc.thas.mail.event.impl.MailReceivedEvent;
 import cc.thas.mail.event.impl.MailTaskErrorEvent;
 import cc.thas.mail.event.publisher.EventPublisher;
 import cc.thas.mail.exception.MailTaskException;
 import cc.thas.mail.message.MailMessage;
 import cc.thas.mail.message.MessageGetter;
+import cc.thas.mail.schedule.SchedulerTaskConfig;
 
 import javax.mail.MessagingException;
 import java.io.UnsupportedEncodingException;
@@ -18,16 +20,21 @@ import java.util.*;
  */
 public class MailTask implements Runnable {
 
+    public static final int DEFAULT_MAX_CACHE_COUNT = 20;
+
     private final String taskId;
+    private final SchedulerTaskConfig config;
     private final MailClient mailClient;
     private final EventPublisher eventPublisher;
-    private boolean initial = false;
-    private int maxCacheCount = 20;
+    private final int maxCacheCount;
     private Queue<String> cachedMessageIds = new LinkedList<>();
 
-    public MailTask(MailClient mailClient, EventPublisher eventPublisher) {
+    public MailTask(SchedulerTaskConfig config, EventPublisher eventPublisher) {
         this.taskId = UUID.randomUUID().toString();
-        this.mailClient = mailClient;
+        this.config = config;
+        this.mailClient = new MailClientImpl(config.getProtocol(), config.getHost(), config.getUser(),
+                config.getPassword());
+        this.maxCacheCount = config.getMaxCacheCount() <= 0 ? DEFAULT_MAX_CACHE_COUNT : config.getMaxCacheCount();
         this.eventPublisher = eventPublisher;
     }
 
@@ -45,9 +52,6 @@ public class MailTask implements Runnable {
     }
 
     private void doRun() throws Exception {
-        if (!initial) {
-            init();
-        }
         List<String> list = new ArrayList<>();
         List<MessageGetter> messages = mailClient.getMessages(maxCacheCount);
         for (MessageGetter message : messages) {
@@ -59,7 +63,8 @@ public class MailTask implements Runnable {
             list.add(message.getId());
         }
         cachedMessageIds.addAll(list);
-        int count = cachedMessageIds.size() - maxCacheCount * 2;
+        // 剔除超出缓存的部分
+        int count = cachedMessageIds.size() - maxCacheCount;
         while (count-- > 0) {
             cachedMessageIds.poll();
         }
@@ -76,13 +81,18 @@ public class MailTask implements Runnable {
         return new MailReceivedEvent(taskId, mailMessage);
     }
 
-    private void init() throws MessagingException {
+    public void init() throws MessagingException {
         mailClient.connect();
+        cachedMessageIds.clear();
         List<MessageGetter> messages = mailClient.getMessages(maxCacheCount);
         for (MessageGetter message : messages) {
             cachedMessageIds.offer(message.getId());
         }
-        initial = true;
+    }
+
+    public void destory() throws MessagingException {
+        mailClient.close();
+        cachedMessageIds.clear();
     }
 
 }
