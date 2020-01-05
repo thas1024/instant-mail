@@ -1,0 +1,16 @@
+spring:
+  profiles:
+    active: true
+instant-mail:
+  enabled: true
+  configs:
+#    - protocol:
+#      host:
+#      user:
+#      password:
+  listeners:
+#    httpListeners:
+#      - url:
+#        params:
+#          text: "subject: ${subject}, from: ${from}"
+#        use-post: true

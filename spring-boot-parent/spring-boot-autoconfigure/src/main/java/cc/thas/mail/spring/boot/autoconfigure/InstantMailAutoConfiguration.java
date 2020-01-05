@@ -1,6 +1,7 @@
 package cc.thas.mail.spring.boot.autoconfigure;
 
 import cc.thas.mail.event.listener.EventListener;
+import cc.thas.mail.event.listener.impl.HttpApiMailReceivedEventListener;
 import cc.thas.mail.event.listener.impl.DefaultMailReceivedEventListener;
 import cc.thas.mail.event.publisher.EventPublisher;
 import cc.thas.mail.event.publisher.impl.DefaultEventPublisher;
@@ -22,7 +23,7 @@ import static cc.thas.mail.spring.boot.autoconfigure.InstantMailAutoConfiguratio
  * @date 2020/1/5 13:59
  */
 @Configuration
-@ConditionalOnProperty(prefix = INSTANT_MAIL_PREFIX, name = "enabled", matchIfMissing = false)
+@ConditionalOnProperty(prefix = INSTANT_MAIL_PREFIX, name = "enabled", havingValue = "true", matchIfMissing = false)
 @EnableConfigurationProperties(InstantMailConfigurationProperties.class)
 public class InstantMailAutoConfiguration {
 
@@ -37,8 +38,14 @@ public class InstantMailAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean(EventPublisher.class)
-    public EventPublisher eventPublisher(Collection<EventListener> listeners) {
+    public EventPublisher eventPublisher(InstantMailConfigurationProperties properties,
+                                         Collection<EventListener> listeners) {
         DefaultEventPublisher publisher = new DefaultEventPublisher();
+        InstantMailConfigurationProperties.Listeners nestedListeners = properties.getListeners();
+        for (InstantMailConfigurationProperties.Listeners.HttpListener httpListener : nestedListeners.getHttpListeners()) {
+            publisher.registerEventListener(new HttpApiMailReceivedEventListener(httpListener.isUsePost(),
+                    httpListener.getUrl(), httpListener.getParams(), httpListener.getHeaders()));
+        }
         listeners.forEach(publisher::registerEventListener);
         return publisher;
     }
