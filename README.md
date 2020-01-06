@@ -4,3 +4,28 @@
 
 ## 基本思想
 ![instant-mail.png](instant-mail.png)
+
+## spring-boot
+属性配置:
+```yaml
+instant-mail:
+  enabled: true
+  configs:
+    - protocol: imap #收件协议imap/pop3
+      host: imap.aliyun.com #收件服务器地址
+      user: xxx@aliyun.com #邮箱地址
+      password: xxx #密码
+  listeners:
+    httpListeners:
+      - url: https://xxx #webhook
+        params:
+          key: string_value
+        header:
+          key: string_value
+        use-post: true #是否post true是/false使用get
+```
+
+## docker
+```
+docker run -v /your_config_path:/config instant-mail
+```
