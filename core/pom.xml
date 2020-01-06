@@ -6,6 +6,7 @@
         <artifactId>instant-mail</artifactId>
         <groupId>cc.thas</groupId>
         <version>1.0-SNAPSHOT</version>
+        <relativePath>..</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
