@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: true
+    active: dev
 instant-mail:
   enabled: true
   configs:
