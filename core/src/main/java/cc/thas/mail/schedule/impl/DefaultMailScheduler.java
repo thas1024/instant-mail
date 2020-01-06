@@ -12,7 +12,6 @@ import cc.thas.mail.schedule.SchedulerTaskConfig;
 import cc.thas.mail.schedule.task.MailTask;
 import lombok.Data;
 
-import javax.mail.MessagingException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -42,18 +41,12 @@ public class DefaultMailScheduler implements MailScheduler {
     @Override
     public void submit(SchedulerTaskConfig config) {
         MailTask mailTask = new MailTask(config, eventPublisher);
-        try {
-            mailTask.init();
-        } catch (MessagingException e) {
-            MailScheduleLog.error("Task %s user %s init failed.", mailTask.getTaskId(), config.getUser());
-            return;
-        }
         MailScheduleLog.info("Submit task %s user %s.", mailTask.getTaskId(), config.getUser());
         ScheduledFuture<?> scheduledFuture = executor.scheduleAtFixedRate(mailTask, config.getInitialDelay(),
                 config.getPeriod(), config.getUnit());
         Store store = new Store();
         store.setConfig(config);
-        store.setTask(mailTask);
+        store.setTaskId(mailTask.getTaskId());
         store.setFuture(scheduledFuture);
         storeMap.put(mailTask.getTaskId(), store);
     }
@@ -68,20 +61,16 @@ public class DefaultMailScheduler implements MailScheduler {
     }
 
     private void cancelTask(Store store) {
-        MailScheduleLog.info("Cancel task %s user %s.", store.getTask().getTaskId(), store.getConfig().getUser());
+        MailScheduleLog.info("Cancel task %s user %s.", store.getTaskId(), store.getConfig().getUser());
         store.getFuture().cancel(false);
-        try {
-            store.getTask().destory();
-        } catch (MessagingException e) {
-            MailScheduleLog.error(e, "MailTask destroyed failed.");
-        }
+
     }
 
     @Data
     public static class Store {
+        private String taskId;
         private SchedulerTaskConfig config;
         private ScheduledFuture<?> future;
-        private MailTask task;
     }
 
     public class MailTaskErrorEventListener implements EventListener {

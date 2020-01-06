@@ -6,6 +6,7 @@ import cc.thas.mail.event.impl.MailReceivedEvent;
 import cc.thas.mail.event.impl.MailTaskErrorEvent;
 import cc.thas.mail.event.publisher.EventPublisher;
 import cc.thas.mail.exception.MailTaskException;
+import cc.thas.mail.logger.MailScheduleLog;
 import cc.thas.mail.logger.SystemErrorLog;
 import cc.thas.mail.message.MailMessage;
 import cc.thas.mail.message.MessageGetter;
@@ -25,11 +26,13 @@ public class MailTask implements Runnable {
 
     private final String taskId;
     private final SchedulerTaskConfig config;
-    private final MailClient mailClient;
+    private  final  MailClient mailClient;
     private final EventPublisher eventPublisher;
     private final int maxCacheCount;
     private Queue<String> cachedMessageIds = new LinkedList<>();
     private int retryCount = 0;
+    private volatile boolean initialed = false;
+    private volatile boolean destroyed = false;
 
     public MailTask(SchedulerTaskConfig config, EventPublisher eventPublisher) {
         this.taskId = UUID.randomUUID().toString();
@@ -45,6 +48,10 @@ public class MailTask implements Runnable {
         try {
             doRun();
         } catch (Exception e) {
+            if(destroyed){
+                SystemErrorLog.error(e, "Task %s run in error(Maybe because it was destroyed).", taskId);
+                return;
+            }
             if (retryCount < 3) {
                 SystemErrorLog.error(e, "Task %s run in error.", taskId);
                 retryCount++;
@@ -57,6 +64,11 @@ public class MailTask implements Runnable {
                 }
             }
             if (e != null) {
+                try {
+                    destroy();
+                } catch (MessagingException ex2) {
+                    MailScheduleLog.error(e, "MailTask destroyed failed.");
+                }
                 eventPublisher.publish(new MailTaskErrorEvent(taskId, new MailTaskException(e)));
             }
         }
@@ -68,6 +80,12 @@ public class MailTask implements Runnable {
     }
 
     private void doRun() throws Exception {
+        if(destroyed){
+            return;
+        }
+        if(!initialed){
+            init();
+        }
         List<String> list = new ArrayList<>();
         List<MessageGetter> messages = mailClient.getMessages(maxCacheCount);
         for (MessageGetter message : messages) {
@@ -97,18 +115,22 @@ public class MailTask implements Runnable {
         return new MailReceivedEvent(taskId, mailMessage);
     }
 
-    public void init() throws MessagingException {
+    private void init() throws MessagingException {
+        if(destroyed){
+            return;
+        }
         mailClient.connect();
         cachedMessageIds.clear();
         List<MessageGetter> messages = mailClient.getMessages(maxCacheCount);
         for (MessageGetter message : messages) {
             cachedMessageIds.offer(message.getId());
         }
+        initialed = true;
     }
 
-    public void destory() throws MessagingException {
+    private void destroy() throws MessagingException {
+        destroyed = true;
         mailClient.close();
-        cachedMessageIds.clear();
     }
 
 }

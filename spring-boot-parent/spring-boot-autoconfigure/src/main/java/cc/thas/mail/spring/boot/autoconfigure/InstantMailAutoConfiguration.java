@@ -1,8 +1,8 @@
 package cc.thas.mail.spring.boot.autoconfigure;
 
 import cc.thas.mail.event.listener.EventListener;
-import cc.thas.mail.event.listener.impl.HttpApiMailReceivedEventListener;
 import cc.thas.mail.event.listener.impl.DefaultMailReceivedEventListener;
+import cc.thas.mail.event.listener.impl.HttpApiMailReceivedEventListener;
 import cc.thas.mail.event.publisher.EventPublisher;
 import cc.thas.mail.event.publisher.impl.DefaultEventPublisher;
 import cc.thas.mail.schedule.MailScheduler;
@@ -30,18 +30,15 @@ public class InstantMailAutoConfiguration {
     public static final String INSTANT_MAIL_PREFIX = "instant-mail";
 
     @Bean
-    @ConditionalOnMissingBean(EventListener.class)
-    public EventListener defaultEventListener() {
-        // 没有自定义listener 使用默认的
-        return new DefaultMailReceivedEventListener();
-    }
-
-    @Bean
     @ConditionalOnMissingBean(EventPublisher.class)
     public EventPublisher eventPublisher(InstantMailConfigurationProperties properties,
                                          Collection<EventListener> listeners) {
         DefaultEventPublisher publisher = new DefaultEventPublisher();
         InstantMailConfigurationProperties.Listeners nestedListeners = properties.getListeners();
+        if (nestedListeners.getHttpListeners().size() <= 0 && listeners.size() <= 0) {
+            // 没有自定义listener 使用默认的
+            publisher.registerEventListener(new DefaultMailReceivedEventListener());
+        }
         for (InstantMailConfigurationProperties.Listeners.HttpListener httpListener : nestedListeners.getHttpListeners()) {
             publisher.registerEventListener(new HttpApiMailReceivedEventListener(httpListener.isUsePost(),
                     httpListener.getUrl(), httpListener.getParams(), httpListener.getHeaders()));

@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
  * @author <a href="mailto:thascc1024@gmail.com">thas</a>
  * @date 2020/1/5 14:55
  */
-@Configuration
+//@Configuration
 public class MailScheduleConfiguration {
 
     @Bean
