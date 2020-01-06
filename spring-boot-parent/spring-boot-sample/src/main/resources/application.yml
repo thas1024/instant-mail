@@ -1,14 +1,14 @@
 spring:
   profiles:
     active: dev
-instant-mail:
-  enabled: true
-  configs:
+#instant-mail:
+#  enabled: true
+#  configs:
 #    - protocol:
 #      host:
 #      user:
 #      password:
-  listeners:
+#  listeners:
 #    httpListeners:
 #      - url:
 #        params:
