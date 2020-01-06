@@ -1,7 +1,6 @@
 package cc.thas.mail.spring.boot.autoconfigure;
 
 import cc.thas.mail.event.listener.EventListener;
-import cc.thas.mail.event.listener.impl.DefaultMailReceivedEventListener;
 import cc.thas.mail.event.listener.impl.HttpApiMailReceivedEventListener;
 import cc.thas.mail.event.publisher.EventPublisher;
 import cc.thas.mail.event.publisher.impl.DefaultEventPublisher;
@@ -15,8 +14,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.Collection;
+import java.util.List;
 
-import static cc.thas.mail.spring.boot.autoconfigure.InstantMailAutoConfiguration.INSTANT_MAIL_PREFIX;
+import static cc.thas.mail.spring.boot.autoconfigure.InstantMailConfigurationProperties.INSTANT_MAIL_PREFIX;
 
 /**
  * @author <a href="mailto:thascc1024@gmail.com">thas</a>
@@ -24,26 +24,25 @@ import static cc.thas.mail.spring.boot.autoconfigure.InstantMailAutoConfiguratio
  */
 @Configuration
 @ConditionalOnProperty(prefix = INSTANT_MAIL_PREFIX, name = "enabled", havingValue = "true", matchIfMissing = false)
-@EnableConfigurationProperties(InstantMailConfigurationProperties.class)
+@EnableConfigurationProperties({InstantMailConfigurationProperties.class, EventListenerConfigurationProperties.class})
 public class InstantMailAutoConfiguration {
-
-    public static final String INSTANT_MAIL_PREFIX = "instant-mail";
 
     @Bean
     @ConditionalOnMissingBean(EventPublisher.class)
-    public EventPublisher eventPublisher(InstantMailConfigurationProperties properties,
+    public EventPublisher eventPublisher(EventListenerConfigurationProperties nestedListeners,
                                          Collection<EventListener> listeners) {
         DefaultEventPublisher publisher = new DefaultEventPublisher();
-        InstantMailConfigurationProperties.Listeners nestedListeners = properties.getListeners();
-        if (nestedListeners.getHttpListeners().size() <= 0 && listeners.size() <= 0) {
-            // 没有自定义listener 使用默认的
-            publisher.registerEventListener(new DefaultMailReceivedEventListener());
+
+        List<EventListenerConfigurationProperties.HttpListener> httpListeners = nestedListeners.getHttpListeners();
+        if (httpListeners != null && httpListeners.size() > 0) {
+            for (EventListenerConfigurationProperties.HttpListener httpListener : httpListeners) {
+                publisher.registerEventListener(new HttpApiMailReceivedEventListener(httpListener.isUsePost(),
+                        httpListener.getUrl(), httpListener.getParams(), httpListener.getHeaders()));
+            }
         }
-        for (InstantMailConfigurationProperties.Listeners.HttpListener httpListener : nestedListeners.getHttpListeners()) {
-            publisher.registerEventListener(new HttpApiMailReceivedEventListener(httpListener.isUsePost(),
-                    httpListener.getUrl(), httpListener.getParams(), httpListener.getHeaders()));
+        if (listeners.size() > 0) {
+            listeners.forEach(publisher::registerEventListener);
         }
-        listeners.forEach(publisher::registerEventListener);
         return publisher;
     }
 
@@ -51,21 +50,23 @@ public class InstantMailAutoConfiguration {
     public MailScheduler scheduler(InstantMailConfigurationProperties properties,
                                    EventPublisher eventPublisher) {
         MailScheduler scheduler = new DefaultMailScheduler(eventPublisher);
-        properties.getConfigs().forEach(item -> {
-            SchedulerTaskConfig config = new SchedulerTaskConfig();
-            config.setHost(item.getHost());
-            long initialDelay =
-                    item.getInitialDelay() <= 0 ? properties.getInitialDelay() : item.getInitialDelay();
-            config.setInitialDelay(initialDelay);
-            int maxCacheCount =
-                    item.getMaxCacheCount() <= 0 ? properties.getMaxCacheCount() : item.getMaxCacheCount();
-            config.setMaxCacheCount(maxCacheCount);
-            config.setHost(item.getHost());
-            config.setProtocol(item.getProtocol());
-            config.setUser(item.getUser());
-            config.setPassword(item.getPassword());
-            scheduler.submit(config);
-        });
+        if (properties.getConfigs() != null && properties.getConfigs().size() > 0) {
+            for (InstantMailConfigurationProperties.TaskConfig item : properties.getConfigs()) {
+                SchedulerTaskConfig config = new SchedulerTaskConfig();
+                config.setHost(item.getHost());
+                long initialDelay =
+                        item.getInitialDelay() <= 0 ? properties.getInitialDelay() : item.getInitialDelay();
+                config.setInitialDelay(initialDelay);
+                int maxCacheCount =
+                        item.getMaxCacheCount() <= 0 ? properties.getMaxCacheCount() : item.getMaxCacheCount();
+                config.setMaxCacheCount(maxCacheCount);
+                config.setHost(item.getHost());
+                config.setProtocol(item.getProtocol());
+                config.setUser(item.getUser());
+                config.setPassword(item.getPassword());
+                scheduler.submit(config);
+            }
+        }
         return new DisposableMailScheduler(scheduler);
     }
 }
